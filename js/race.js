@@ -257,7 +257,7 @@ const Race = (() => {
     if (isPlayer){
       const inp = World.input, touch = html.classList.contains('is-mode-touch');
       let thr = clamp((inp.up - inp.down) + inp.padThrottle, -1, 1);
-      if (touch) thr = inp.joyY > .45 ? -1 : 1;
+      if (touch) thr = inp.joyY > .35 ? -1 : 1; // thumbstick: pulled down brakes, otherwise full thrust
       if (s.finishT != null) thr = .3;
       const steer = s.finishT != null ? -s.x*.1 : clamp((inp.right - inp.left) + inp.joyX + inp.padX, -1, 1);
       const boosting = racing && (inp.boost || inp.padBoost) && s.energy > 0 && thr > 0 && s.finishT == null;

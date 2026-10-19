@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+Devanagari:wght@600&family=Noto+Sans+Bengali:wght@600&family=Noto+Sans+Tamil:wght@600&family=Noto+Sans+Telugu:wght@600&display=swap">
-<link rel="stylesheet" href="css/style.css?v=10">
+<link rel="stylesheet" href="css/style.css?v=12">
 </head>
 <body>
 <div class="game" id="game"></div>
@@ -47,6 +47,7 @@
 
 <div class="prompt" id="prompt"><div class="prompt-inner frame brackets"><span class="k-key key">ENTER</span><span class="k-pad key">A</span><span class="k-touch key">OPEN</span><span class="area" id="promptArea">Area</span></div></div>
 
+<div class="vstick" id="vstick" aria-hidden="true"><span class="vs-tick t"></span><span class="vs-tick b"></span><span class="vs-tick l"></span><span class="vs-tick r"></span><i class="vstick-knob" id="vstickKnob"></i></div>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
 <div class="modals">
@@ -96,7 +97,7 @@
 <div class="warp" id="warp"></div>
 
 <div class="touch" id="touch">
-  <div class="touch-help" id="touchHelp">Hold your finger where you want to go · tap a ◆ to open · pinch to zoom</div>
+  <div class="touch-help" id="touchHelp">Touch anywhere: a stick appears · up = forward · down = back · tap a ◆ to open</div>
   <div class="tbtns">
     <button class="tbtn is-open" id="tOpen">OPEN</button>
     <button class="tbtn" id="tHop">HOP</button>
@@ -113,12 +114,12 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <!-- load order matters: data → sound → core → city builders → world → race → app -->
-<script src="js/data.js?v=10"></script>
-<script src="js/sound.js?v=10"></script>
-<script src="js/core.js?v=10"></script>
-<script src="js/city.js?v=10"></script>
-<script src="js/world.js?v=10"></script>
-<script src="js/race.js?v=10"></script>
-<script src="js/app.js?v=10"></script>
+<script src="js/data.js?v=12"></script>
+<script src="js/sound.js?v=12"></script>
+<script src="js/core.js?v=12"></script>
+<script src="js/city.js?v=12"></script>
+<script src="js/world.js?v=12"></script>
+<script src="js/race.js?v=12"></script>
+<script src="js/app.js?v=12"></script>
 </body>
 </html>

@@ -409,3 +409,21 @@ html.is-mode-touch .intro-title .tap-word::before{content:"TAP";font-size:1.5rem
 }
 @media (max-width:440px){ .tab{width:34px} }
 @media (max-width:360px){ .tab{width:30px} }
+
+/* floating DualSense-style thumbstick (touch) */
+.vstick{position:fixed;left:0;top:0;width:150px;height:150px;margin:-75px 0 0 -75px;z-index:9;pointer-events:none;opacity:0;transform:scale(.6);transition:opacity .15s, transform .25s var(--ease-spring);border-radius:50%;
+  background:radial-gradient(circle at 50% 45%, rgba(30,44,38,.55), rgba(4,9,7,.72) 70%);box-shadow:inset 0 0 0 1.5px rgba(230,204,138,.45), inset 0 6px 18px rgba(0,0,0,.6), 0 8px 26px rgba(0,0,0,.45)}
+.vstick.is-active{opacity:1;transform:scale(1)}
+.vstick::after{content:"";position:absolute;inset:16px;border-radius:50%;border:1px dashed rgba(74,242,161,.25)}
+.vs-tick{position:absolute;width:0;height:0;border:6px solid transparent;opacity:.7}
+.vs-tick.t{left:50%;top:8px;margin-left:-6px;border-bottom-color:var(--holo)}
+.vs-tick.b{left:50%;bottom:8px;margin-left:-6px;border-top-color:var(--gold)}
+.vs-tick.l{top:50%;left:8px;margin-top:-6px;border-right-color:rgba(238,246,241,.6)}
+.vs-tick.r{top:50%;right:8px;margin-top:-6px;border-left-color:rgba(238,246,241,.6)}
+.vstick-knob{position:absolute;left:50%;top:50%;width:66px;height:66px;margin:-33px 0 0 -33px;border-radius:50%;
+  background:radial-gradient(circle at 50% 40%, #2c3833 0%, #161e1a 55%, #0b100d 100%);
+  box-shadow:0 0 0 2px rgba(74,242,161,.65), 0 0 18px rgba(74,242,161,.45), inset 0 -6px 10px rgba(0,0,0,.55), inset 0 4px 8px rgba(255,255,255,.08)}
+.vstick-knob::after{content:"";position:absolute;inset:12px;border-radius:50%;background:radial-gradient(circle, rgba(0,0,0,.35), transparent 70%);box-shadow:inset 0 2px 4px rgba(0,0,0,.5)}
+.vstick.is-back .vstick-knob{box-shadow:0 0 0 2px rgba(230,204,138,.8), 0 0 18px rgba(230,204,138,.45), inset 0 -6px 10px rgba(0,0,0,.55), inset 0 4px 8px rgba(255,255,255,.08)}
+html.is-mode-touch .minimap{top:58px}
+html.used-stick .touch-help{opacity:0;transition:opacity .6s 1.5s}

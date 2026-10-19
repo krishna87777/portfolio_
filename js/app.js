@@ -68,19 +68,31 @@ function pollGamepad(){
   gp.buttons.forEach((x, i) => padPrev[i] = x.pressed);
 }
 
-// touch: hold a finger where you want to go, tap a diamond to open it, pinch to zoom.
-// in the race: drag left/right anywhere to steer (thrust is automatic).
+// touch: a floating PS5-style thumbstick appears wherever you put your thumb.
+// push up = forward, pull down = reverse, left/right = steer. tap a diamond to open it,
+// pinch with two fingers to zoom. in the race the same stick steers (pull down to brake).
 (() => {
-  const game = $('#game'), touches = new Map();
-  let pinch0 = 0, raceX0 = 0;
+  const game = $('#game'), touches = new Map(), R = 62, DEAD = .14;
+  const stick = $('#vstick'), knob = $('#vstickKnob');
+  let pinch0 = 0, stickId = null, sx = 0, sy = 0;
+  const showStick = (x, y) => { sx = x; sy = y; stick.style.left = x + 'px'; stick.style.top = y + 'px'; knob.style.transform = ''; stick.classList.add('is-active'); html.classList.add('used-stick'); };
+  const hideStick = () => { stickId = null; stick.classList.remove('is-active'); knob.style.transform = ''; World.input.joyX = World.input.joyY = 0; };
+  function moveStick(x, y){
+    let dx = x - sx, dy = y - sy; const l = Math.hypot(dx, dy);
+    if (l > R){ dx = dx/l*R; dy = dy/l*R; }
+    knob.style.transform = `translate(${dx}px, ${dy}px)`;
+    const k = v => Math.abs(v) < DEAD ? 0 : (v - Math.sign(v)*DEAD)/(1 - DEAD);
+    World.input.joyX = k(dx/R); World.input.joyY = k(dy/R);
+    stick.classList.toggle('is-back', dy/R > DEAD);
+  }
   game.addEventListener('pointerdown', e => {
-    if (e.pointerType === 'mouse' || !World || !World.started) return;
-    setMode('touch');
-    touches.set(e.pointerId, {x:e.clientX, y:e.clientY, t:e.timeStamp, x0:e.clientX, y0:e.clientY, pin:Race.active ? null : World.pinAt(e.clientX, e.clientY)});
+    if (e.pointerType === 'mouse' || !World || !World.started || modalOpen) return;
+    setMode('touch'); e.preventDefault();
+    const pin = Race.active ? null : World.pinAt(e.clientX, e.clientY);
+    touches.set(e.pointerId, {x:e.clientX, y:e.clientY, x0:e.clientX, y0:e.clientY, pin});
     game.setPointerCapture && game.setPointerCapture(e.pointerId);
-    if (touches.size === 2){ const [p1, p2] = [...touches.values()]; pinch0 = Math.hypot(p1.x - p2.x, p1.y - p2.y); World.input.finger = null; return; }
-    if (Race.active){ raceX0 = e.clientX; return; }
-    if (!modalOpen && !touches.get(e.pointerId).pin) World.input.finger = {x:e.clientX, y:e.clientY};
+    if (touches.size === 2){ hideStick(); const [p1, p2] = [...touches.values()]; pinch0 = Math.hypot(p1.x - p2.x, p1.y - p2.y); return; }
+    if (!pin && stickId === null){ stickId = e.pointerId; showStick(e.clientX, e.clientY); }
   });
   game.addEventListener('pointermove', e => {
     const tp = touches.get(e.pointerId); if (!tp) return;
@@ -90,18 +102,16 @@ function pollGamepad(){
       if (pinch0 > 0){ World.zoomBy(pinch0/d); pinch0 = d; }
       return;
     }
-    if (Race.active){ World.input.joyX = clamp((e.clientX - raceX0)/70, -1, 1); return; }
-    if (World.input.finger){ World.input.finger.x = e.clientX; World.input.finger.y = e.clientY; }
+    if (e.pointerId === stickId) moveStick(e.clientX, e.clientY);
+    // started on a diamond but dragged away: treat it as a stick after all
+    else if (tp.pin && Math.hypot(tp.x - tp.x0, tp.y - tp.y0) > 18 && stickId === null){ tp.pin = null; stickId = e.pointerId; showStick(tp.x0, tp.y0); moveStick(tp.x, tp.y); }
   });
   const end = e => {
     const tp = touches.get(e.pointerId); touches.delete(e.pointerId);
     if (touches.size < 2) pinch0 = 0;
-    if (touches.size) return;
-    World.input.finger = null; World.input.joyX = 0;
+    if (e.pointerId === stickId) hideStick();
     // a touch that starts and ends on a diamond (without dragging) opens that area
-    if (tp && tp.pin && !Race.active && Math.hypot(tp.x - tp.x0, tp.y - tp.y0) < 18){
-      if (tp.pin){ World.input.finger = null; openArea(tp.pin.area); }
-    }
+    if (tp && tp.pin && !Race.active && Math.hypot(tp.x - tp.x0, tp.y - tp.y0) < 18) openArea(tp.pin.area);
   };
   game.addEventListener('pointerup', end); game.addEventListener('pointercancel', end);
   const hold = (el, on, off) => { el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); on(); }); el.addEventListener('pointerup', off || (() => {})); el.addEventListener('pointerleave', off || (() => {})); el.addEventListener('pointercancel', off || (() => {})); };
