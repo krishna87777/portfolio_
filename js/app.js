@@ -69,7 +69,7 @@ function pollGamepad(){
 }
 
 // touch: a floating PS5-style thumbstick appears wherever you put your thumb.
-// push up = forward, pull down = reverse, left/right = steer. tap a diamond to open it,
+// the pod moves in the direction the stick points on screen (right = goes right, down = comes toward you). tap a diamond to open it,
 // pinch with two fingers to zoom. in the race the same stick steers (pull down to brake).
 (() => {
   const game = $('#game'), touches = new Map(), R = 62, DEAD = .14;
@@ -83,7 +83,6 @@ function pollGamepad(){
     knob.style.transform = `translate(${dx}px, ${dy}px)`;
     const k = v => Math.abs(v) < DEAD ? 0 : (v - Math.sign(v)*DEAD)/(1 - DEAD);
     World.input.joyX = k(dx/R); World.input.joyY = k(dy/R);
-    stick.classList.toggle('is-back', dy/R > DEAD);
   }
   game.addEventListener('pointerdown', e => {
     if (e.pointerType === 'mouse' || !World || !World.started || modalOpen) return;

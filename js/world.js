@@ -8,8 +8,10 @@ function createWorld(){ World = (() => {
   const container = $('#game');
   const isTouch = matchMedia('(pointer:coarse)').matches;
   const renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.25 : 2));
-  const Q = isTouch ? .65 : 1; // phones get a lighter city
+  const PR_MAX = Math.min(devicePixelRatio, 2);
+  let pixelRatio = PR_MAX;
+  renderer.setPixelRatio(pixelRatio);
+  const Q = isTouch ? .9 : 1; // nearly the full city on phones too
   renderer.setSize(innerWidth, innerHeight);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -37,7 +39,7 @@ function createWorld(){ World = (() => {
     composer = new THREE.EffectComposer(renderer);
     renderPass = new THREE.RenderPass(scene, camera);
     composer.addPass(renderPass);
-    bloom = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth*(isTouch ? .5 : 1), innerHeight*(isTouch ? .5 : 1)), .4, .5, .9);
+    bloom = new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .4, .5, .9);
     composer.addPass(bloom);
   }
   function render(sc, cam){
@@ -134,7 +136,7 @@ function createWorld(){ World = (() => {
 
   // floating data motes
   const motes = (() => {
-    const n = isTouch ? 200 : 500, g = new THREE.BufferGeometry(), p = new Float32Array(n*3);
+    const n = isTouch ? 380 : 500, g = new THREE.BufferGeometry(), p = new Float32Array(n*3);
     for (let i = 0; i < n; i++){ const a = Math.random()*Math.PI*2, r = Math.sqrt(Math.random())*R_ISLAND; p[i*3] = Math.cos(a)*r; p[i*3+1] = Math.random()*40; p[i*3+2] = Math.sin(a)*r; }
     g.setAttribute('position', new THREE.BufferAttribute(p, 3));
     const pts = new THREE.Points(g, new THREE.PointsMaterial({color:0x4af2a1, size:.3, transparent:true, opacity:.8, blending:THREE.AdditiveBlending, depthWrite:false}));
@@ -617,16 +619,27 @@ function createWorld(){ World = (() => {
         fThr = dist > 3 ? clamp(dist/12, .35, 1)*(Math.abs(diff) > 2 ? .45 : 1) : 0;
       }
     }
-    const throttle = enabled ? clamp((input.up - input.down) + -input.joyY + input.padThrottle + fThr, -1, 1) : 0;
-    const steer = enabled ? clamp((input.left - input.right) + -input.joyX + -input.padX + fSteer, -1, 1) : 0;
+    // touch stick = direction control: the pod turns to face where the stick points on screen
+    const sMag = Math.min(1, Math.hypot(input.joyX, input.joyY));
+    let dirMode = false;
+    if (enabled && sMag > 0){
+      dirMode = true;
+      const cy = camState.yaw, jx = input.joyX, jy = input.joyY;
+      const dx = Math.cos(cy)*jx - Math.sin(cy)*-jy, dz = -Math.sin(cy)*jx - Math.cos(cy)*-jy; // screen right/up -> ground
+      let diff = Math.atan2(-dx, -dz) - car.yaw; diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+      const turn = 5.5*dt; car.yaw += clamp(diff, -turn, turn);
+      car.steer = damp(car.steer, clamp(diff*1.5, -1, 1), 10, dt); // for the banking animation
+      fThr = sMag*(Math.abs(diff) > 1.7 ? .35 : 1); fSteer = 0;
+    }
+    const throttle = enabled ? clamp((input.up - input.down) + (dirMode ? 0 : -input.joyY) + input.padThrottle + fThr, -1, 1) : 0;
+    const steer = enabled ? clamp((input.left - input.right) + (dirMode ? 0 : -input.joyX) + -input.padX + fSteer, -1, 1) : 0;
     const wantBoost = enabled && (input.boost > 0 || input.padBoost > 0) && throttle > 0;
     car.boosting = wantBoost;
     const maxV = wantBoost ? 42 : 24, accel = wantBoost ? 60 : 32;
     if (throttle) car.speed += throttle*accel*dt; else car.speed *= Math.exp(-2*dt);
     if (Math.abs(car.speed) > maxV) car.speed = damp(car.speed, Math.sign(car.speed)*maxV, 3, dt);
     car.speed = clamp(car.speed, -11, 46);
-    car.steer = damp(car.steer, steer, 10, dt);
-    car.yaw += car.steer*2.3*dt*clamp(car.speed/7, -1, 1);
+    if (!dirMode){ car.steer = damp(car.steer, steer, 10, dt); car.yaw += car.steer*2.3*dt*clamp(car.speed/7, -1, 1); }
     fwd.set(-Math.sin(car.yaw), 0, -Math.cos(car.yaw));
     car.pos.addScaledVector(fwd, car.speed*dt);
     if (wantBoost) achieve('boost', dt);
@@ -730,10 +743,6 @@ function createWorld(){ World = (() => {
       return;
     }
     // on touch the camera swings behind the pod, so stick-up always means "into the screen"
-    if (html.classList.contains('is-mode-touch') && !drag){
-      let d = car.yaw - camState.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
-      camState.yaw += d*(1 - Math.exp(-(car.speed < -1 ? .6 : 2.6)*dt));
-    }
     const lead = Math.min(Math.abs(car.speed), 26)*.2;
     camState.target.x = damp(camState.target.x, car.pos.x + fwd.x*lead, 5, dt);
     camState.target.z = damp(camState.target.z, car.pos.z + fwd.z*lead, 5, dt);
@@ -793,8 +802,24 @@ function createWorld(){ World = (() => {
       render(scene, camera);
     }
     if (Sound.musicOn && started) achieve('music', dt);
+    adaptQuality(dt);
     fpsAcc += dt; fpsN++; if (fpsAcc > .5){ $('#fps').textContent = `${Math.round(fpsN/fpsAcc)} fps · ${renderer.info.render.calls} draws · ${(renderer.info.render.triangles/1000).toFixed(0)}k tris`; fpsAcc = 0; fpsN = 0; }
     requestAnimationFrame(frame);
+  }
+
+  // adaptive resolution: if frames are slow for ~2 s, render fewer pixels; if there is headroom, go back up
+  let qAcc = 0, qN = 0;
+  function adaptQuality(dt){
+    if (!started || modalOpen) return;
+    qAcc += dt; qN++;
+    if (qAcc < 2) return;
+    const fps = qN/qAcc; qAcc = 0; qN = 0;
+    let next = pixelRatio;
+    if (fps < 42 && pixelRatio > 1) next = Math.max(1, +(pixelRatio - .25).toFixed(2));
+    else if (fps > 57 && pixelRatio < PR_MAX) next = Math.min(PR_MAX, +(pixelRatio + .25).toFixed(2));
+    if (next === pixelRatio) return;
+    pixelRatio = next; renderer.setPixelRatio(pixelRatio);
+    if (composer){ if (composer.setPixelRatio) composer.setPixelRatio(pixelRatio); composer.setSize(innerWidth, innerHeight); }
   }
 
   function start(){
