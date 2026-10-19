@@ -427,3 +427,4 @@ html.is-mode-touch .intro-title .tap-word::before{content:"TAP";font-size:1.5rem
 .vstick.is-back .vstick-knob{box-shadow:0 0 0 2px rgba(230,204,138,.8), 0 0 18px rgba(230,204,138,.45), inset 0 -6px 10px rgba(0,0,0,.55), inset 0 4px 8px rgba(255,255,255,.08)}
 html.is-mode-touch .minimap{top:58px}
 html.used-stick .touch-help{opacity:0;transition:opacity .6s 1.5s}
+html.is-mode-touch .mm-here{max-width:none}

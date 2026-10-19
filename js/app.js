@@ -114,6 +114,9 @@ function pollGamepad(){
     if (tp && tp.pin && !Race.active && Math.hypot(tp.x - tp.x0, tp.y - tp.y0) < 18) openArea(tp.pin.area);
   };
   game.addEventListener('pointerup', end); game.addEventListener('pointercancel', end);
+  game.addEventListener('lostpointercapture', e => { if (touches.has(e.pointerId)) end(e); });
+  // never leave the stick stuck if the page loses focus mid-drag
+  addEventListener('blur', () => { touches.clear(); hideStick(); });
   const hold = (el, on, off) => { el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); on(); }); el.addEventListener('pointerup', off || (() => {})); el.addEventListener('pointerleave', off || (() => {})); el.addEventListener('pointercancel', off || (() => {})); };
   hold($('#tBoost'), () => { World.input.boost = 1; Sound.boost(); }, () => World.input.boost = 0);
   hold($('#tHop'), () => World.hop());

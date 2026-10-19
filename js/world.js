@@ -729,6 +729,11 @@ function createWorld(){ World = (() => {
       camera.lookAt(0, 3.5, 4);
       return;
     }
+    // on touch the camera swings behind the pod, so stick-up always means "into the screen"
+    if (html.classList.contains('is-mode-touch') && !drag){
+      let d = car.yaw - camState.yaw; d = Math.atan2(Math.sin(d), Math.cos(d));
+      camState.yaw += d*(1 - Math.exp(-(car.speed < -1 ? .6 : 2.6)*dt));
+    }
     const lead = Math.min(Math.abs(car.speed), 26)*.2;
     camState.target.x = damp(camState.target.x, car.pos.x + fwd.x*lead, 5, dt);
     camState.target.z = damp(camState.target.z, car.pos.z + fwd.z*lead, 5, dt);
