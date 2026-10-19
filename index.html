@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<title>Krishna's Sky City</title>
+<meta name="description" content="A drivable futuristic sky-city portfolio of an ML engineer, with a spacecraft race. Every sound is synthesized live.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3l13 13-13 13L3 16z' fill='%237ff3ff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Manrope:wght@400;500;700;800&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+Devanagari:wght@600&family=Noto+Sans+Bengali:wght@600&family=Noto+Sans+Tamil:wght@600&family=Noto+Sans+Telugu:wght@600&display=swap">
+<link rel="stylesheet" href="css/style.css?v=10">
+</head>
+<body>
+<div class="game" id="game"></div>
+
+<div class="intro" id="intro" role="button" tabindex="0" aria-label="Start the experience">
+  <div class="intro-cta">
+    <svg class="arrow" viewBox="0 0 120 70" aria-hidden="true"><path d="M10 64 C 30 20, 80 10, 100 30"/><path d="M90 18 L101 31 L86 34"/></svg>
+    <div class="intro-title brackets"><span class="tap-word">CLICK</span> TO INITIALIZE<span class="blink">_</span></div>
+    <div class="intro-sub">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 8.5a5 5 0 0 1 0 7"/><path class="wave" d="M18.5 6a8.5 8.5 0 0 1 0 12" style="animation-delay:.3s"/></svg>
+      <span>Sound on · every sound is synthesized live</span>
+    </div>
+    <div class="intro-loading" id="loading">Building the city…</div>
+  </div>
+</div>
+
+<div class="mode-chip" id="modeChip"><span class="dot"></span><span id="modeName">Emerald</span></div>
+<div class="fps" id="fps"></div>
+<button class="minimap" id="minimapWrap" aria-label="Open the full map" title="Open the full map (TAB)">
+  <canvas id="minimap" width="360" height="360"></canvas>
+  <span class="mm-n">N</span>
+  <span class="mm-here"><span class="mm-dot"></span><span id="mmHere">Landing</span></span>
+</button>
+
+<div class="hud">
+  <button class="trigger frame" id="btnMenu" aria-label="Open menu"><span class="burger"><i></i><i></i><i></i></span></button>
+  <button class="trigger frame" id="btnMap" aria-label="Open map"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 12 L19 6"/></svg></button>
+  <button class="trigger frame trigger-race" id="btnRace" aria-label="Play the sky race" title="Sky Race (R)"><svg viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h13l-3 4 3 4H5"/></svg><span>RACE</span></button>
+  <button class="trigger frame" id="btnSound" aria-label="Toggle sound"><svg viewBox="0 0 24 24" class="snd-on"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7"/></svg><svg viewBox="0 0 24 24" class="snd-off"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg></button>
+</div>
+
+<div class="hint">
+  <span><span class="key">W A S D</span> drive</span><span><span class="key">SHIFT</span> boost</span><span><span class="key">SPACE</span> hop</span><span><span class="key">H</span> ping</span><span><span class="key">ENTER</span> interact</span><span><span class="key">TAB</span> map</span><span><span class="key">R</span> race</span><span><span class="key">T</span> world mode</span><span><span class="key">M</span> mute</span><span><span class="key">drag</span> orbit</span>
+</div>
+
+<div class="prompt" id="prompt"><div class="prompt-inner frame brackets"><span class="k-key key">ENTER</span><span class="k-pad key">A</span><span class="k-touch key">OPEN</span><span class="area" id="promptArea">Area</span></div></div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<div class="modals">
+  <section class="modal" id="menu" aria-hidden="true" aria-label="Menu">
+    <div class="menu-frame">
+      <nav class="menu-tabs" id="tabs"></nav>
+      <button class="tab tab-close frame" id="menuClose" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <div class="panel frame brackets">
+        <div class="panel-preview"><img id="prevA" alt=""><img id="prevB" alt="" class="is-out"><div class="cam-label"><span class="rec"></span><span id="camLabel">CAM-00</span></div><div class="cam-coords" id="camCoords"></div></div>
+        <div class="panel-content" id="panelContent"><div class="content-inner" id="content"></div></div>
+      </div>
+    </div>
+  </section>
+  <section class="modal" id="mapModal" aria-hidden="true" aria-label="Map">
+    <div class="map-wrap"><canvas id="mapCanvas" width="1024" height="1024"></canvas></div>
+    <div class="map-title" style="position:fixed;left:20px;top:20px">// Sky city · top-down</div>
+    <div class="map-help" style="position:fixed;left:20px;bottom:20px">Click any area to fast-travel there.</div>
+    <button class="tab tab-close frame" id="mapClose" aria-label="Close map" style="position:fixed;top:20px;right:20px;border-radius:6px"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </section>
+</div>
+
+<!-- race mode HUD (the "other window": a separate sky-circuit scene) -->
+<div class="race-hud" id="raceHud">
+  <div class="rh-tl frame brackets">
+    <div class="rh-pos"><b id="rhPos">1</b><sup id="rhSuf">st</sup><span> / 4</span></div>
+    <div class="rh-row">LAP <b id="rhLap">1 / 3</b></div>
+    <div class="rh-row">TIME <b id="rhTime">0:00.00</b></div>
+    <div class="rh-row">BEST LAP <b id="rhBest">—</b></div>
+  </div>
+  <div class="rh-board" id="rhBoard"></div>
+  <div class="rh-speed"><div><b id="rhSpeed">0</b><small>KM/S</small></div><div class="rh-boost"><i id="rhBoost"></i></div><small>BOOST · SHIFT</small></div>
+  <canvas class="rh-mini" id="rhMini" width="360" height="360"></canvas>
+  <div class="rh-count" id="rhCount"></div>
+  <div class="rh-banner" id="rhBanner"></div>
+  <div class="rh-keys"><span><span class="key">W</span> thrust</span><span><span class="key">S</span> brake</span><span><span class="key">A D</span> steer</span><span><span class="key">SHIFT</span> boost</span><span><span class="key">R</span> restart</span><span><span class="key">ESC</span> back to city</span></div>
+  <button class="tab tab-close frame rh-exit" id="rhExit" aria-label="Back to city"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <div class="rh-results" id="rhResults">
+    <div class="rh-card frame brackets">
+      <p class="eyebrow">// race complete</p>
+      <h2 class="title" id="rhResTitle">1st place</h2>
+      <p id="rhResSub" class="text-small"></p>
+      <div class="rh-res" id="rhRes"></div>
+      <div class="btn-row"><button class="button is-holo" id="rhAgain">Race again</button><button class="button" id="rhBack">Back to city</button></div>
+    </div>
+  </div>
+</div>
+<div class="warp" id="warp"></div>
+
+<div class="touch" id="touch">
+  <div class="touch-help" id="touchHelp">Hold your finger where you want to go · tap a ◆ to open · pinch to zoom</div>
+  <div class="tbtns">
+    <button class="tbtn is-open" id="tOpen">OPEN</button>
+    <button class="tbtn" id="tHop">HOP</button>
+    <button class="tbtn" id="tBoost">BOOST</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/utils/BufferGeometryUtils.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<!-- load order matters: data → sound → core → city builders → world → race → app -->
+<script src="js/data.js?v=10"></script>
+<script src="js/sound.js?v=10"></script>
+<script src="js/core.js?v=10"></script>
+<script src="js/city.js?v=10"></script>
+<script src="js/world.js?v=10"></script>
+<script src="js/race.js?v=10"></script>
+<script src="js/app.js?v=10"></script>
+</body>
+</html>
